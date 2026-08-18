@@ -1,6 +1,6 @@
 # 🛍️ Full-Stack eCommerce Application
 
-![App Screenshot](app_sm.png)
+![App Logo](https://raw.githubusercontent.com/ammard3v/ecommerce-multi-platform/ba775c18e7fc52001c51044d806c93906dbe1c09/eShop/android/app/src/main/res/drawable-hdpi/splash.png)
 
 A production-style Full-Stack eCommerce application developed independently with heavy focus on Flutter app, while also designing and implementing the backend API and integrating an admin panel.
 

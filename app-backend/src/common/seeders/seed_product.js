@@ -6,7 +6,7 @@ import cloudinary from "cloudinary";
 import Product from "../../features/product/product_model.js";
 cloudinary.v2.config({
   cloud_name: process.env.CLOUD_NAME,
-  api_key:process.env.CLOUD_API_KEY,,
+  api_key: process.env.CLOUD_API_KEY,
   api_secret: process.env.CLOUD_API_SECRET,
 });
 const DB = process.env.DB_URL;
