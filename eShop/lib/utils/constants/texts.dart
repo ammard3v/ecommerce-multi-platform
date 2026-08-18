@@ -1,0 +1,64 @@
+class AppTexts {
+  const AppTexts._();
+  static const String firstName = "First Name";
+  static const String lastName = "Last Name";
+  static const String email = "E-Mail";
+  static const String password = "Password";
+  static const String conformpassword = "Conform Password";
+  static const String newPassword = "New Password";
+  static const String username = "Username";
+  static const String phoneNo = "Phone Number";
+  static const String rememberMe = "Remember Me";
+  static const String forgotPassword = "Forgot Password?";
+  static const String signIn = "Sign In";
+  static const String signUp = "Sign Up";
+  static const String createAccount = "Create Account";
+  static const String orSignInWith = "or Sign In With";
+  static const String orSignUpWith = "or Sign Up With";
+  static const String iAgreeTo = "I agree to";
+  static const String privacyPolicy = "Privacy Policy";
+  static const String termsOfUse = "Terms of use";
+  static const String verificationCode = "verificationCode";
+  static const String verifyCode = "Verify Code";
+  static const String resendOTP = "Resend OTP";
+  static const String resendEmailIn = "Resend email in";
+  static const String verify = "Verify";
+  static const String forgotPasswordSubTitle =
+      "Please enter the registered email";
+  static const String didntReceiveCode = "Didnt receive a code?";
+  static const String dontHaveAnAcc = "Dont have an account?";
+  static const String alreadyHaveAnAcc = "Already have an account?";
+  static const String verifyCodeSubTitle =
+      "Please enter the code we just sent to eamil";
+  static const String loginSubTitle = "Hi Welcome Back, you've been missed";
+  static const String signupTitle = "Let's create your account";
+  static const String forgetPasswordTitle = "Forgot password";
+  static const String forgetPasswordSubTitle =
+      "Don’t worry sometimes people can forget too, enter your email and we will send you a password reset link.";
+  static const String submit = "Submit";
+  static const String fullName = "Full Name";
+  static const String save = "Save";
+  static const String resetPassword = "Reset Password";
+  static const String loadingText = "  Loading...";
+  static const String resultsFor = "Results for: ";
+  static const String checkStatus = "Check Status";
+  static const String resultsFound = " results found";
+  static const String budgetProducts = "Budget Products";
+  static const String featuredProducts = "Featured Products";
+  static const String searchInStore = "Search In Store";
+  static const String viewAll = "View All";
+  static const String seeAll = "See All";
+  static const String mostPopular = "Most Popular";
+  static const String category = "Category";
+  static const String priceRange = "Price Range";
+  static const String sortby = "Sort By";
+  static const String ratings = "Ratings";
+  static const String sthWentNorth = "Something went wrong!";
+  static const String pageDntExist = "Page Doesnt exist!";
+  static const String totalPrice = "Total Price ";
+  static const String serverOnMaintain = "Server is on Maintenance";
+  static const String processingWait = " Processing... Please Wait";
+  static const String notSupportedNow = "Not Supported For Now.";
+  static const String recentSearch = "Recent Search";
+  static const String clearAll = "Clear All";
+}

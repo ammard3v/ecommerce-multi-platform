@@ -1,0 +1,18 @@
+import { Router } from "express";
+import AuthController from "./../auth/auth_controller.js";
+import UserController from "./user_controller.js";
+const UserRoutes = Router();
+UserRoutes.use(AuthController.protect);
+UserRoutes.route("/me")
+  .get(UserController.getUser)
+  .patch(UserController.updateUser)
+  .delete(UserController.deleteMe);
+UserRoutes.patch("/updateMyPassword", UserController.updateUserPassword);
+UserRoutes.use(AuthController.restrictTo("admin"));
+UserRoutes.route("/:id")
+  .get(UserController.getUser)
+  .patch(UserController.updateUser)
+  .delete(UserController.deleteUser);
+UserRoutes.route("/active/:id").patch(UserController.activeUser);
+UserRoutes.route("/").get(UserController.getAllUsers);
+export default UserRoutes;

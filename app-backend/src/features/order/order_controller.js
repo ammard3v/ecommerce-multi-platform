@@ -1,0 +1,285 @@
+import AppError from "../../common/utils/appError.js";
+import Product from "../product/product_model.js";
+import Review from "./../review/review_model.js";
+import Order from "./order_model.js";
+import Address from "./../address/address_model.js";
+import Cart from "../cart/cart_model.js";
+import { sendCustomNotificationService } from "./../../common/config/notification_service.js";
+const OrderController = {
+  createOrder: async (req, res, next) => {
+    try {
+      const user = req.user;
+      const shippingAddress = await Address.findOne({
+        user: req.user.id,
+        is_default: true,
+      });
+      if (!shippingAddress) {
+        return next(new AppError("Shipping address is required", 400));
+      }
+      const cart = await Cart.findOne({ user: req.user.id }).populate(
+        "items.product",
+      );
+      if (!cart || cart.items.length === 0) {
+        return next(new AppError("Cart is empty", 400));
+      }
+      const existingOrder = await Order.findOne({
+        user: req.user.id,
+        status: "pending",
+        isPaid: false,
+      });
+      if (existingOrder) {
+        return next(new AppError("You already have a pending order", 409));
+      }
+      let subtotal = 0;
+      const orderItems = [];
+      for (const item of cart.items) {
+        const product = item.product;
+        if (!product) {
+          return next(new AppError("Product not found", 404));
+        }
+        if (product.stock < item.quantity) {
+          return next(
+            new AppError(`Insufficient stock for ${product.title}`, 400),
+          );
+        }
+        const discount = product.discount ?? 0;
+        const price = Number(
+          (product.price - (product.price * discount) / 100).toFixed(2),
+        );
+        subtotal += price * item.quantity;
+        orderItems.push({
+          product: product._id,
+          title: product.title,
+          price,
+          quantity: item.quantity,
+          image: product.images[0],
+        });
+      }
+      subtotal = Number(subtotal.toFixed(2));
+      const shippingPrice = 170;
+      const taxPrice = Number((subtotal * 0.13).toFixed(2));
+      const totalPrice = Number(
+        (subtotal + shippingPrice + taxPrice).toFixed(2),
+      );
+      const order = await Order.create({
+        userInfo: {
+          userId: user._id,
+          name: user.name,
+          email: user.email ?? "",
+          phone: user.phone ?? "",
+        },
+        orderItems,
+        shippingAddress: {
+          address_line1: shippingAddress.address_line1,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          postal_code: shippingAddress.postal_code,
+          country: shippingAddress.country ?? "Nepal",
+          optional_remarks: shippingAddress.optional_remarks ?? "",
+        },
+        paymentMethod: "COD",
+        isPaid: false,
+        itemsPrice: subtotal,
+        shippingPrice,
+        taxPrice,
+        totalPrice,
+        status: "pending",
+        shippedAt: null,
+        deliveredAt: null,
+      });
+      cart.items = [];
+      await cart.save();
+      await sendCustomNotificationService({
+        userId: user.id,
+        safeTitle: "Order Created",
+        safeBody: "Your order has been placed successfully.",
+        safeType: "order",
+      });
+      return res.status(201).json({
+        status: "success",
+        message: "Order placed successfully (Cash on Delivery)",
+        data: order,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  getOrderByPaymentIntent: async (req, res, next) => {
+    try {
+      const { paymentIntentId } = req.params;
+      if (!paymentIntentId) {
+        return res.status(400).json({ error: "PaymentIntent ID is required" });
+      }
+      const order = await Order.findOne({
+        "paymentResult.id": paymentIntentId,
+      }).populate("shippingAddress");
+      if (!order) {
+        return res.status(404).json({ error: "Order not found yet" });
+      }
+      res.status(200).json({
+        status: "success",
+        data: order,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+  getMyOrders: async (req, res, next) => {
+    const orders = await Order.find({ "userInfo.userId": req.user._id }).sort({
+      createdAt: -1,
+    });
+    const orderIds = orders.map((order) => order._id);
+    const reviews = await Review.find({ orderId: { $in: orderIds } });
+    const reviewedOrderIds = new Set(
+      reviews.map((review) => review.orderId.toString()),
+    );
+    const ordersWithReviewStatus = orders.map((order) => {
+      const reviewed = reviewedOrderIds.has(order._id.toString());
+      return {
+        ...order.toObject(),
+        hasReviewed: reviewed,
+        canReview: order.status === "delivered" && !reviewed,
+      };
+    });
+    res.status(200).json({
+      status: "success",
+      data: ordersWithReviewStatus,
+    });
+  },
+  getAllOrders: async (req, res, next) => {
+    const orders = await Order.find({}).sort({
+      created_at: -1,
+    });
+    const orderIds = orders.map((order) => order._id);
+    const reviews = await Review.find({ orderId: { $in: orderIds } });
+    const reviewedOrderIds = new Set(
+      reviews.map((review) => review.orderId.toString()),
+    );
+    const ordersWithReviewStatus = orders.map((order) => {
+      const reviewed = reviewedOrderIds.has(order._id.toString());
+      return {
+        ...order.toObject(),
+        hasReviewed: reviewed,
+        canReview: order.status === "delivered" && !reviewed,
+      };
+    });
+    res.status(200).json({
+      status: "success",
+      data: ordersWithReviewStatus,
+    });
+  },
+  getOrderById: async (req, res, next) => {
+    try {
+      const { orderId } = req.params;
+      const order = await Order.findOne({
+        _id: orderId,
+        "userInfo.userId": req.user._id,
+      });
+      if (!order) {
+        return res
+          .status(404)
+          .json({ status: "fail", message: "Order not found" });
+      }
+      const review = await Review.findOne({ orderId: order._id });
+      const hasReviewed = !!review;
+      const canReview = order.status === "delivered" && !hasReviewed;
+      res.status(200).json({
+        status: "success",
+        data: { ...order.toObject(), hasReviewed, canReview },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+  updateOrderStatus: async (req, res, next) => {
+    try {
+      const { orderId } = req.params;
+      const { status } = req.body;
+      const allowedStatuses = [
+        "pending",
+        "confirmed",
+        "shipped",
+        "delivered",
+        "cancelled",
+      ];
+      if (!allowedStatuses.includes(status)) {
+        return res.status(400).json({ message: "Invalid status value." });
+      }
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Order not found." });
+      }
+      const previousStatus = order.status;
+      const statusTransitions = {
+        pending: ["confirmed", "cancelled"],
+        confirmed: ["shipped", "cancelled"],
+        shipped: ["delivered", "cancelled"],
+        delivered: ["cancelled"],
+        cancelled: [],
+      };
+      if (!statusTransitions[previousStatus].includes(status)) {
+        return res.status(400).json({
+          message: `Cannot change status from '${previousStatus}' to '${status}'.`,
+        });
+      }
+      if (status === "shipped" && previousStatus !== "shipped") {
+        order.shippedAt = new Date();
+      }
+      if (status === "delivered" && previousStatus !== "delivered") {
+        order.deliveredAt = new Date();
+        if (order.paymentMethod === "COD") {
+          order.isPaid = true;
+        }
+        for (const item of order.orderItems) {
+          const updatedProduct = await Product.findOneAndUpdate(
+            {
+              _id: item.product,
+              stock: { $gte: item.quantity },
+            },
+            { $inc: { stock: -item.quantity, units_sold: item.quantity } },
+            { new: true },
+          );
+          if (!updatedProduct) {
+            return next(
+              new AppError(`Insufficient stock for ${item.title}`, 400),
+            );
+          }
+        }
+        await sendCustomNotificationService({
+          userId: order.userInfo.userId,
+          safeTitle: "Order Delivered",
+          safeBody: "Your order has been delivered successfully.",
+          safeType: "order",
+        });
+      }
+      if (previousStatus === "delivered" && status === "cancelled") {
+        for (const item of order.orderItems) {
+          await Product.findByIdAndUpdate(item.product, {
+            $inc: { stock: item.quantity, units_sold: -item.quantity },
+          });
+        }
+      }
+      order.status = status;
+      const updatedOrder = await order.save();
+      const reviews = await Review.find({ orderId: updatedOrder._id });
+      const reviewedProductIds = reviews.map((r) => r.product.toString());
+      const orderWithReviewFlags = updatedOrder.toObject();
+      orderWithReviewFlags.orderItems = orderWithReviewFlags.orderItems.map(
+        (item) => ({
+          ...item,
+          hasReviewed: reviewedProductIds.includes(item.product.toString()),
+          canReview:
+            updatedOrder.status === "delivered" &&
+            !reviewedProductIds.includes(item.product.toString()),
+        }),
+      );
+      res.status(200).json({
+        status: "success",
+        data: orderWithReviewFlags,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+};
+export default OrderController;

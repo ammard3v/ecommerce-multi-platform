@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "919466299050",
+    "project_id": "project-ecommerce-156de",
+    "storage_bucket": "project-ecommerce-156de.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:919466299050:android:dbc4e97ee663e612868ad3",
+        "android_client_info": {
+          "package_name": "com.ammar.eshop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "919466299050-r0ghgu6mavs46ao81jnvvmu64939gn1e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCI7kYFavsUp9VgJXI3XKfPcfbgyVXJrVc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "919466299050-gofb60svfsehu4c8nlu42rrvkbvogj24.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "919466299050-jc24pkjvterqhlicce35kc4nupg6tqc8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.pages"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
